@@ -40,4 +40,6 @@ typedef struct {
 
 void chip8_initialize(Chip8* system);
 
+void chip8_emulateCycle(Chip8* system);
+
 #endif

@@ -1,4 +1,5 @@
 #include "chip8.h"
+#include "stdio.h"
 
 void chip8_initialize(Chip8* system) {
     system->pc = 0x200;         // Program counter always starts at 0x200
@@ -22,6 +23,28 @@ void chip8_initialize(Chip8* system) {
     for (int i = 0; i < 4096; i++) {
         system->memory[i] = 0;
     }
+}
+
+void chip8_emulateCycle(Chip8* system) {
+
+    // Fetch opcode
+    system->opcode = system->memory[system->pc] << 8 | system->memory[system->pc + 1];
+
+    // Decode opcode
+    switch(system->opcode & 0xF000)
+    {    
+        // Some opcode
     
+        case 0xA000: // ANNN: Sets I to the address NNN
+
+        // Execute opcode
+        system->I = system->opcode & 0x0FFF;
+        system->pc += 2;
+        break;
     
+        // More opcodes //
+    
+        default:
+        printf("Unknown opcode: 0x%X\n", system->opcode);
+    }  
 }

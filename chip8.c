@@ -1,10 +1,12 @@
 #include "chip8.h"
 
 void chip8_initialize(Chip8* system) {
-    system->pc = 0x200; // Program counter always starts at 0x200
-    system->opcode = 0;
-    system->I = 0;
-    system->sp = 0;
+    system->pc = 0x200;         // Program counter always starts at 0x200
+    system->opcode = 0;         // Reset current opcode
+    system->I = 0;              // Reset index register
+    system->sp = 0;             // Reset stack pointer
+    system->delay_timer = 0;    // Reset delay timer
+    system->sound_timer = 0;    // Reset sound timer
 
     // Clear stack
     for (int i = 0; i < 16; i++) {

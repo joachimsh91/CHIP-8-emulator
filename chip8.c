@@ -43,6 +43,10 @@ void chip8_emulateCycle(Chip8* system) {
         break;
     
         // More opcodes //
+
+        case 0xB000: // BNNN: Jumps to the address NNN plus V0
+        system->pc = (system->opcode & 0x0FFF) + system->V[0];
+        break;
     
         default:
         printf("Unknown opcode: 0x%X\n", system->opcode);

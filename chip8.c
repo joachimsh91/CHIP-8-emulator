@@ -77,6 +77,23 @@ void chip8_emulateCycle(Chip8* system) {
             break;
         }
 
+        case 0x6000: { //Sets VX to NN
+            uint8_t x = (system->opcode & 0x0F00) >> 8;
+            uint8_t nn = system->opcode & 0x00FF;
+            system->V[x] = nn;
+            system->pc +=2;
+            break;
+
+        }
+
+        case 0x7000: { //Adds NN to VX (carry flag is not changed)
+            uint8_t x = (system->opcode & 0x0F00) >> 8;
+            uint8_t nn = system->opcode & 0x00FF;
+            system->V[x] += nn;
+            system->pc +=2;
+            break;
+        }
+
         case 0xA000: // ANNN: Sets I to the address NNN
             system->I = system->opcode & 0x0FFF;
             system->pc += 2;

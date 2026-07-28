@@ -94,6 +94,50 @@ void chip8_emulateCycle(Chip8* system) {
             break;
         }
 
+        case 0x8000: {
+            uint8_t x = (system->opcode & 0x0F00) >> 8;
+            uint8_t y = (system->opcode & 0x00F0) >> 4;
+
+            switch(system->opcode & 0x000F)
+            {
+                case 0x0000: //Sets VX to the value of VY
+                    system->V[x] = system->V[y];
+                    system->pc += 2;
+                    break;
+                
+                case 0x0001: //Sets VX to VX or VY (bitwise OR operation)
+                    system->V[x] = system->V[x] | system->V[y];
+                    system->pc += 2;
+                    break;
+
+                case 0x0002: //Sets VX to VX and VY (bitwise AND operation)
+                    system->V[x] = system->V[x] & system->V[y];
+                    system->pc += 2;
+                    break;
+                
+                case 0x0003: //Sets VX to VX xor VY 
+                    system->V[x] = system->V[x] ^ system->V[y];
+                    system->pc += 2;
+                    break;
+
+                case 0x0004: { //Adds VY to VX. VF is set to 1 when there's an overflow, and to 0 when there is not
+                    uint16_t sum = system->V[x] + system->V[y];
+                    if (sum > 255) {
+                        system->V[0xF] = 1;
+                    }
+                    else {
+                        system->V[0xF] = 0;
+                    }
+                    system->V[x] = sum & 0xFF;
+                    system->pc += 2;
+                    break;
+                }
+                
+            }
+            break;
+
+        }
+
         case 0xA000: // ANNN: Sets I to the address NNN
             system->I = system->opcode & 0x0FFF;
             system->pc += 2;

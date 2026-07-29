@@ -132,6 +132,50 @@ void chip8_emulateCycle(Chip8* system) {
                     system->pc += 2;
                     break;
                 }
+
+                case 0x0005: { //VY is subtracted from VX. VF is set to 0 when there's an underflow, and 1 when there is not
+                    if (system->V[x] >= system->V[y]) {
+                        system->V[0xF] = 1;
+                    }
+                    else {
+                        system->V[0xF] = 0;
+                    }
+                    system->V[x] -= system->V[y];
+                    system->pc += 2;
+                    break;
+                }
+
+                case 0x0006: { //Shifts VX to the right by 1, then stores the least significant bit of VX prior to the shift into VF
+                    uint8_t lsb = system->V[x] & 0x01;
+                    system->V[0xF] = lsb;
+                    system->V[x] = system->V[x] >> 1;
+                    system->pc += 2;
+                    break;
+                }
+
+                case 0x0007: { //Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not
+                    if (system->V[y] >= system->V[x]) {
+                        system->V[0xF] = 1;
+                    }
+                    else {
+                        system->V[0xF] = 0;
+                    }
+                    system->V[x] = system->V[y] - system->V[x];
+                    system->pc += 2;
+                    break;
+                }
+
+                case 0x000E: { //Shifts VX to the left by 1, then sets VF to 1 if the most significant bit of VX prior to that shift was set, or to 0 if it was unset
+                    if ((system->V[x] & 0x80) != 0) {
+                        system->V[0xF] = 1; 
+                    } 
+                    else {
+                        system->V[0xF] = 0;
+                    }
+                    system->V[x] = system->V[x] << 1;
+                    system->pc += 2;
+                    break;
+                }
                 
             }
             break;

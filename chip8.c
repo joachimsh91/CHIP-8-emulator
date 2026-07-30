@@ -1,5 +1,25 @@
 #include "chip8.h"
 #include "stdio.h"
+#include "stdlib.h"
+
+const uint8_t chip8_fontset[80] = {         // The standard CHIP-8 fontset (16 symbols, 5 bytes each)
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+};
 
 void chip8_initialize(Chip8* system) {
     system->pc = 0x200;         // Program counter always starts at 0x200
@@ -22,6 +42,11 @@ void chip8_initialize(Chip8* system) {
     // Clear memory
     for (int i = 0; i < 4096; i++) {
         system->memory[i] = 0;
+    }
+
+    // Load fontset into memory from address 0x50 and onwards
+    for (int i = 0; i < 80; i++) {
+        system->memory[0x50 + i] = chip8_fontset[i];
     }
 }
 
@@ -182,6 +207,16 @@ void chip8_emulateCycle(Chip8* system) {
 
         }
 
+        case 0x9000: { //Skips the next instruction if VX does not equal VY (usually the next instruction is a jump to skip a code block)
+            uint8_t x = (system->opcode & 0x0F00) >> 8;
+            uint8_t y = (system->opcode & 0x00F0) >> 4;
+            if (system->V[x] != system->V[y]){
+                system->pc +=2;
+            }
+            system->pc +=2;
+            break;
+        }
+
         case 0xA000: // ANNN: Sets I to the address NNN
             system->I = system->opcode & 0x0FFF;
             system->pc += 2;
@@ -190,6 +225,15 @@ void chip8_emulateCycle(Chip8* system) {
         case 0xB000: // BNNN: Jumps to the address NNN plus V0
             system->pc = (system->opcode & 0x0FFF) + system->V[0];
             break;
+
+        case 0xC000: { //Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN
+            uint8_t x = (system->opcode & 0x0F00) >> 8;
+            uint8_t nn = system->opcode & 0x00FF;
+            uint8_t rand_num = (rand() % 256);
+            system->V[x] = rand_num & nn;
+            system->pc +=2;
+            break;
+        }
     
         default:
         printf("Unknown opcode: 0x%X\n", system->opcode);

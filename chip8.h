@@ -42,4 +42,7 @@ void chip8_initialize(Chip8* system);
 
 void chip8_emulateCycle(Chip8* system);
 
+extern const uint8_t chip8_fontset[80];
+
+
 #endif

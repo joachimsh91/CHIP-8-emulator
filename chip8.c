@@ -165,7 +165,7 @@ void chip8_emulateCycle(Chip8* system) {
                     else {
                         system->V[0xF] = 0;
                     }
-                    system->V[x] -= system->V[y];
+                    system->V[x] = (system->V[x] - system->V[y]) & 0xFF;
                     system->pc += 2;
                     break;
                 }
@@ -197,7 +197,7 @@ void chip8_emulateCycle(Chip8* system) {
                     else {
                         system->V[0xF] = 0;
                     }
-                    system->V[x] = system->V[x] << 1;
+                    system->V[x] = (system->V[x] << 1) & 0xFF;
                     system->pc += 2;
                     break;
                 }

@@ -74,7 +74,7 @@ void chip8_emulateCycle(Chip8* system) {
             system->pc = system->opcode & 0x0FFF;
             break;
 
-        case 0x3000: { //Skips the next instruction if VX equals NN (usually the next instruction is a jump to skip a code block)
+        case 0x3000: { // Skips the next instruction if VX equals NN (usually the next instruction is a jump to skip a code block)
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
             if (system->V[x] == nn){
@@ -83,7 +83,7 @@ void chip8_emulateCycle(Chip8* system) {
             system->pc +=2;
             break;
     }
-        case 0x4000: { //Skips the next instruction if VX does not equal NN (usually the next instruction is a jump to skip a code block)
+        case 0x4000: { // Skips the next instruction if VX does not equal NN (usually the next instruction is a jump to skip a code block)
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
             if (system->V[x] != nn){
@@ -92,7 +92,7 @@ void chip8_emulateCycle(Chip8* system) {
             system->pc +=2;
             break;
     }
-        case 0x5000: { //Skips the next instruction if VX equals VY (usually the next instruction is a jump to skip a code block)
+        case 0x5000: { // Skips the next instruction if VX equals VY (usually the next instruction is a jump to skip a code block)
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t y = (system->opcode & 0x00F0) >> 4;
             if (system->V[x] == system->V[y]){
@@ -102,7 +102,7 @@ void chip8_emulateCycle(Chip8* system) {
             break;
         }
 
-        case 0x6000: { //Sets VX to NN
+        case 0x6000: { // Sets VX to NN
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
             system->V[x] = nn;
@@ -111,7 +111,7 @@ void chip8_emulateCycle(Chip8* system) {
 
         }
 
-        case 0x7000: { //Adds NN to VX (carry flag is not changed)
+        case 0x7000: { // Adds NN to VX (carry flag is not changed)
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
             system->V[x] += nn;
@@ -125,27 +125,27 @@ void chip8_emulateCycle(Chip8* system) {
 
             switch(system->opcode & 0x000F)
             {
-                case 0x0000: //Sets VX to the value of VY
+                case 0x0000: // Sets VX to the value of VY
                     system->V[x] = system->V[y];
                     system->pc += 2;
                     break;
                 
-                case 0x0001: //Sets VX to VX or VY (bitwise OR operation)
+                case 0x0001: // Sets VX to VX or VY (bitwise OR operation)
                     system->V[x] = system->V[x] | system->V[y];
                     system->pc += 2;
                     break;
 
-                case 0x0002: //Sets VX to VX and VY (bitwise AND operation)
+                case 0x0002: // Sets VX to VX and VY (bitwise AND operation)
                     system->V[x] = system->V[x] & system->V[y];
                     system->pc += 2;
                     break;
                 
-                case 0x0003: //Sets VX to VX xor VY 
+                case 0x0003: // Sets VX to VX xor VY 
                     system->V[x] = system->V[x] ^ system->V[y];
                     system->pc += 2;
                     break;
 
-                case 0x0004: { //Adds VY to VX. VF is set to 1 when there's an overflow, and to 0 when there is not
+                case 0x0004: { // Adds VY to VX. VF is set to 1 when there's an overflow, and to 0 when there is not
                     uint16_t sum = system->V[x] + system->V[y];
                     if (sum > 255) {
                         system->V[0xF] = 1;
@@ -158,7 +158,7 @@ void chip8_emulateCycle(Chip8* system) {
                     break;
                 }
 
-                case 0x0005: { //VY is subtracted from VX. VF is set to 0 when there's an underflow, and 1 when there is not
+                case 0x0005: { // VY is subtracted from VX. VF is set to 0 when there's an underflow, and 1 when there is not
                     if (system->V[x] >= system->V[y]) {
                         system->V[0xF] = 1;
                     }
@@ -170,7 +170,7 @@ void chip8_emulateCycle(Chip8* system) {
                     break;
                 }
 
-                case 0x0006: { //Shifts VX to the right by 1, then stores the least significant bit of VX prior to the shift into VF
+                case 0x0006: { // Shifts VX to the right by 1, then stores the least significant bit of VX prior to the shift into VF
                     uint8_t lsb = system->V[x] & 0x01;
                     system->V[0xF] = lsb;
                     system->V[x] = system->V[x] >> 1;
@@ -178,7 +178,7 @@ void chip8_emulateCycle(Chip8* system) {
                     break;
                 }
 
-                case 0x0007: { //Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not
+                case 0x0007: { // Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not
                     if (system->V[y] >= system->V[x]) {
                         system->V[0xF] = 1;
                     }
@@ -190,7 +190,7 @@ void chip8_emulateCycle(Chip8* system) {
                     break;
                 }
 
-                case 0x000E: { //Shifts VX to the left by 1, then sets VF to 1 if the most significant bit of VX prior to that shift was set, or to 0 if it was unset
+                case 0x000E: { // Shifts VX to the left by 1, then sets VF to 1 if the most significant bit of VX prior to that shift was set, or to 0 if it was unset
                     if ((system->V[x] & 0x80) != 0) {
                         system->V[0xF] = 1; 
                     } 
@@ -205,7 +205,7 @@ void chip8_emulateCycle(Chip8* system) {
             break;
         }
 
-        case 0x9000: { //Skips the next instruction if VX does not equal VY (usually the next instruction is a jump to skip a code block)
+        case 0x9000: { // Skips the next instruction if VX does not equal VY (usually the next instruction is a jump to skip a code block)
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t y = (system->opcode & 0x00F0) >> 4;
             if (system->V[x] != system->V[y]){
@@ -224,7 +224,7 @@ void chip8_emulateCycle(Chip8* system) {
             system->pc = (system->opcode & 0x0FFF) + system->V[0];
             break;
 
-        case 0xC000: { //Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN
+        case 0xC000: { // Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
             uint8_t rand_num = (rand() % 256);
@@ -238,14 +238,14 @@ void chip8_emulateCycle(Chip8* system) {
 
             switch(system->opcode & 0x00FF)
             {
-                case 0x009E: //Skips the next instruction if the key stored in VX is pressed (usually the next instruction is a jump to skip a code block)
+                case 0x009E: // Skips the next instruction if the key stored in VX is pressed (usually the next instruction is a jump to skip a code block)
                     if (system->key[system->V[x]] == 1){
                         system->pc +=2;
                     }
                     system->pc +=2;
                     break;
 
-                case 0x00A1: // 	Skips the next instruction if the key stored in VX is not pressed (usually the next instruction is a jump to skip a code block)
+                case 0x00A1: // Skips the next instruction if the key stored in VX is not pressed (usually the next instruction is a jump to skip a code block)
                     if (system->key[system->V[x]] == 0){
                         system->pc +=2;
                     }
@@ -281,20 +281,51 @@ void chip8_emulateCycle(Chip8* system) {
                     break;
                 }
 
-                case 0x0015:
+                case 0x0015: // Sets the delay timer to VX
                     system->delay_timer = system->V[x];
                     system->pc += 2;
                     break;
 
-                case 0x0018:
+                case 0x0018: // Sets the sound timer to VX
                     system->sound_timer = system->V[x];
                     system->pc += 2;
                     break;
 
-                case 0x001E:
+                case 0x001E: // Adds VX to I. VF is not affected
                     system->I = system->I + system->V[x];
                     system->pc += 2;
                     break;
+
+                case 0x0029: // Sets I to the location of the sprite for the character in VX
+                    system->I = 0x50 + (system->V[x] * 5);
+                    system->pc += 2;
+                    break;
+                
+                case 0x0033: { // FX33: Stores the BCD representation of VX in memory at I, I+1, and I+2
+                    uint8_t value = system->V[x];
+
+                    system->memory[system->I] = value / 100;
+                    system->memory[system->I + 1] = (value / 10) % 10;
+                    system->memory[system->I + 2] = value % 10;
+                    system->pc += 2;
+                    break;
+                }
+
+                case 0x0055: { // Stores from V0 to VX (including VX) in memory, starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified
+                    for (int i = 0; i <= x; i++){
+                        system->memory[system->I +i] = system->V[i];
+                    }
+                    system->pc += 2;
+                    break;
+                }
+
+                case 0x0065: { // Fills from V0 to VX (including VX) with values from memory, starting at address I. The offset from I is increased by 1 for each value read, but I itself is left unmodified
+                    for (int i = 0; i <= x; i++){
+                        system->V[i] = system->memory[system->I +i];
+                    }
+                    system->pc += 2;
+                    break;
+                }
             }
             break;
         }

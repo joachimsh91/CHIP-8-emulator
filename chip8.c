@@ -201,10 +201,8 @@ void chip8_emulateCycle(Chip8* system) {
                     system->pc += 2;
                     break;
                 }
-                
             }
             break;
-
         }
 
         case 0x9000: { //Skips the next instruction if VX does not equal VY (usually the next instruction is a jump to skip a code block)
@@ -232,6 +230,72 @@ void chip8_emulateCycle(Chip8* system) {
             uint8_t rand_num = (rand() % 256);
             system->V[x] = rand_num & nn;
             system->pc +=2;
+            break;
+        }
+
+        case 0xE000: {
+            uint8_t x = (system->opcode & 0x0F00) >> 8;
+
+            switch(system->opcode & 0x00FF)
+            {
+                case 0x009E: //Skips the next instruction if the key stored in VX is pressed (usually the next instruction is a jump to skip a code block)
+                    if (system->key[system->V[x]] == 1){
+                        system->pc +=2;
+                    }
+                    system->pc +=2;
+                    break;
+
+                case 0x00A1: // 	Skips the next instruction if the key stored in VX is not pressed (usually the next instruction is a jump to skip a code block)
+                    if (system->key[system->V[x]] == 0){
+                        system->pc +=2;
+                    }
+                    system->pc +=2;
+                    break;
+            }
+            break;
+        }
+
+        case 0xF000: {
+            uint8_t x = (system->opcode & 0x0F00) >> 8;
+            switch(system->opcode & 0x00FF)
+            {
+                case 0x0007:
+                    system->V[x] = system->delay_timer;
+                    system->pc += 2;
+                    break;
+                
+                case 0x000A: { // FX0A: Wait for a key press, store the value of the key in VX
+                    int key_pressed = 0;
+
+                    for (int i = 0; i < 16; i++) {
+                        if (system->key[i] == 1) {
+                            system->V[x] = i;  
+                            key_pressed = 1;   
+                            break;             
+                        }
+                    }
+
+                    if (key_pressed) {
+                        system->pc += 2;
+                    }
+                    break;
+                }
+
+                case 0x0015:
+                    system->delay_timer = system->V[x];
+                    system->pc += 2;
+                    break;
+
+                case 0x0018:
+                    system->sound_timer = system->V[x];
+                    system->pc += 2;
+                    break;
+
+                case 0x001E:
+                    system->I = system->I + system->V[x];
+                    system->pc += 2;
+                    break;
+            }
             break;
         }
     

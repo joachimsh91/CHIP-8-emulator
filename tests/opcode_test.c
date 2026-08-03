@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../chip8.h"
+#include <time.h>
+#include "../chip8.h" // Walks one directory up to find chip8.h
 
 // Helper function to inject a 16-bit opcode into memory at a specific address
 void inject_opcode(Chip8* system, uint16_t addr, uint16_t opcode) {
@@ -12,7 +13,10 @@ int main() {
     Chip8 my_chip8;
     chip8_initialize(&my_chip8);
     
-    printf("=== STARTING COMPREHENSIVE OPCODE TEST ===\n\n");
+    // Seed the random number generator with the current time
+    srand(time(NULL));
+    
+    printf("=== STARTING COMPREHENSIVE OPCODE TEST (33/34 OPCODES) ===\n\n");
 
     // ----------------------------------------------------
     // TEST 1: Core assignment and arithmetic (6XNN, 7XNN)
@@ -21,8 +25,8 @@ int main() {
     inject_opcode(&my_chip8, 0x200, 0x6110); // V1 = 0x10 (16)
     inject_opcode(&my_chip8, 0x202, 0x7105); // V1 += 0x05 (21)
     
-    chip8_emulateCycle(&my_chip8); // Executes 0x6110
-    chip8_emulateCycle(&my_chip8); // Executes 0x7105
+    chip8_emulateCycle(&my_chip8); 
+    chip8_emulateCycle(&my_chip8); 
     printf("[6XNN / 7XNN] V1 is now: 0x%02X (Expected: 0x15)\n", my_chip8.V[1]);
 
     // ----------------------------------------------------
@@ -109,7 +113,7 @@ int main() {
 
     // 8XY4: ADD with Overflow (Carry)
     my_chip8.V[1] = 0xFF; my_chip8.V[2] = 0x02; my_chip8.pc = 0x200;
-    inject_opcode(&my_chip8, 0x200, 0x8124); // V1 += V2 (255 + 2 = 257 -> rolls over to 1)
+    inject_opcode(&my_chip8, 0x200, 0x8124); // V1 += V2
     chip8_emulateCycle(&my_chip8);
     printf("[8XY4] Overflow - V1: 0x%02X (Expected: 0x01) | VF: %d (Expected: 1)\n", my_chip8.V[1], my_chip8.V[0xF]);
 
@@ -121,7 +125,7 @@ int main() {
 
     // 8XY5: SUB with underflow (Borrow)
     my_chip8.V[1] = 0x05; my_chip8.V[2] = 0x10; my_chip8.pc = 0x200;
-    inject_opcode(&my_chip8, 0x200, 0x8125); // V1 = V1 - V2 (5 - 16 -> underflow)
+    inject_opcode(&my_chip8, 0x200, 0x8125); // V1 = V1 - V2
     chip8_emulateCycle(&my_chip8);
     printf("[8XY5] Underflow - V1: 0x%02X (Expected: 0xF5) | VF: %d (Expected: 0)\n", my_chip8.V[1], my_chip8.V[0xF]);
 
@@ -132,7 +136,7 @@ int main() {
     printf("[8XY5] No underflow - V1: 0x%02X (Expected: 0x1B) | VF: %d (Expected: 1)\n", my_chip8.V[1], my_chip8.V[0xF]);
 
     // 8XY6: Shift Right (LSB was 1)
-    my_chip8.V[1] = 0x05; my_chip8.pc = 0x200; // 5 = binary 00000101 (LSB = 1)
+    my_chip8.V[1] = 0x05; my_chip8.pc = 0x200; 
     inject_opcode(&my_chip8, 0x200, 0x8126);
     chip8_emulateCycle(&my_chip8);
     printf("[8XY6] Shift Right - V1: 0x%02X (Expected: 0x02) | VF: %d (Expected: 1)\n", my_chip8.V[1], my_chip8.V[0xF]);
@@ -144,32 +148,119 @@ int main() {
     printf("[8XY7] SUBN - V1: 0x%02X (Expected: 0x1B) | VF: %d (Expected: 1)\n", my_chip8.V[1], my_chip8.V[0xF]);
 
     // 8XYE: Shift Left (MSB was 1)
-    my_chip8.V[1] = 0x85; my_chip8.pc = 0x200; // 0x85 = binary 10000101 (MSB = 1)
+    my_chip8.V[1] = 0x85; my_chip8.pc = 0x200; 
     inject_opcode(&my_chip8, 0x200, 0x812E);
     chip8_emulateCycle(&my_chip8);
     printf("[8XYE] Shift Left - V1: 0x%02X (Expected: 0x0A) | VF: %d (Expected: 1)\n", my_chip8.V[1], my_chip8.V[0xF]);
 
     // ----------------------------------------------------
-    // TEST 5: Stack and Subroutine Calls (2NNN)
+    // TEST 5: E-Series (Keyboard conditional skips)
     // ----------------------------------------------------
-    printf("\n--- Testing Stack ---\n");
-    my_chip8.pc = 0x200;
-    my_chip8.sp = 0;
-    inject_opcode(&my_chip8, 0x200, 0x2400); // CALL subroutine at address 0x400
+    printf("\n--- Testing E-Series (Keyboard) ---\n");
+    // EX9E (Skip if pressed)
+    my_chip8.pc = 0x200; my_chip8.V[1] = 5; my_chip8.key[5] = 1; // Key 5 is pressed
+    inject_opcode(&my_chip8, 0x200, 0xE19E);
     chip8_emulateCycle(&my_chip8);
-    printf("[2NNN] PC after CALL: 0x%X (Expected: 0x400) | SP: %d (Expected: 1) | Stack[0]: 0x%X (Expected: 0x202)\n", 
-            my_chip8.pc, my_chip8.sp, my_chip8.stack[0]);
+    printf("[EX9E True] PC after skip: 0x%X (Expected: 0x204)\n", my_chip8.pc);
+
+    // EXA1 (Skip if NOT pressed)
+    my_chip8.pc = 0x200; my_chip8.V[1] = 5; my_chip8.key[5] = 0; // Key 5 is released
+    inject_opcode(&my_chip8, 0x200, 0xE1A1);
+    chip8_emulateCycle(&my_chip8);
+    printf("[EXA1 True] PC after skip: 0x%X (Expected: 0x204)\n", my_chip8.pc);
 
     // ----------------------------------------------------
-    // TEST 6: Random Number (CXNN)
+    // TEST 6: F-Series - Timers, Sound & Indexes
+    // ----------------------------------------------------
+    printf("\n--- Testing F-Series (Timers & Indexes) ---\n");
+    // FX07: VX = delay_timer
+    my_chip8.pc = 0x200; my_chip8.delay_timer = 0x42;
+    inject_opcode(&my_chip8, 0x200, 0xF107);
+    chip8_emulateCycle(&my_chip8);
+    printf("[FX07] V1 loaded from delay_timer: 0x%02X (Expected: 0x42)\n", my_chip8.V[1]);
+
+    // FX15: delay_timer = VX
+    my_chip8.pc = 0x200; my_chip8.V[1] = 0x1F;
+    inject_opcode(&my_chip8, 0x200, 0xF115);
+    chip8_emulateCycle(&my_chip8);
+    printf("[FX15] delay_timer set from V1: 0x%02X (Expected: 0x1F)\n", my_chip8.delay_timer);
+
+    // FX18: sound_timer = VX
+    my_chip8.pc = 0x200; my_chip8.V[1] = 0x0B;
+    inject_opcode(&my_chip8, 0x200, 0xF118);
+    chip8_emulateCycle(&my_chip8);
+    printf("[FX18] sound_timer set from V1: 0x%02X (Expected: 0x0B)\n", my_chip8.sound_timer);
+
+    // FX1E: I += VX
+    my_chip8.pc = 0x200; my_chip8.I = 0x100; my_chip8.V[1] = 0x50;
+    inject_opcode(&my_chip8, 0x200, 0xF11E);
+    chip8_emulateCycle(&my_chip8);
+    printf("[FX1E] Index I after addition: 0x%X (Expected: 0x150)\n", my_chip8.I);
+
+    // FX29: I = font_character_address
+    my_chip8.pc = 0x200; my_chip8.V[1] = 2; // Character '2'
+    inject_opcode(&my_chip8, 0x200, 0xF129);
+    chip8_emulateCycle(&my_chip8);
+    printf("[FX29] Index I for character '2': 0x%X (Expected: 0x5A -> 0x50 + (2 * 5))\n", my_chip8.I);
+
+    // ----------------------------------------------------
+    // TEST 7: F-Series - FX33 Binary-Coded Decimal (BCD)
+    // ----------------------------------------------------
+    printf("\n--- Testing FX33 (BCD Conversion) ---\n");
+    my_chip8.pc = 0x200; my_chip8.I = 0x300; my_chip8.V[1] = 154; // Hundreds=1, Tens=5, Ones=4
+    inject_opcode(&my_chip8, 0x200, 0xF133);
+    chip8_emulateCycle(&my_chip8);
+    printf("[FX33] Memory[0x300]: %d (Exp: 1) | Memory[0x301]: %d (Exp: 5) | Memory[0x302]: %d (Exp: 4)\n",
+            my_chip8.memory[0x300], my_chip8.memory[0x301], my_chip8.memory[0x302]);
+
+    // ----------------------------------------------------
+    // TEST 8: F-Series - FX55 / FX65 (Memory Dump & Load)
+    // ----------------------------------------------------
+    printf("\n--- Testing FX55 / FX65 (Memory Dump & Load) ---\n");
+
+    // FX55: Dump registers V0-V3 into memory starting at I (0x600)
+    my_chip8.pc = 0x200; my_chip8.I = 0x600;my_chip8.V[0] = 0x11; my_chip8.V[1] = 0x22; my_chip8.V[2] = 0x33; my_chip8.V[3] = 0x44;
+    inject_opcode(&my_chip8, 0x200, 0xF355); // Dump V0 through V3
+    chip8_emulateCycle(&my_chip8);
+    printf("[FX55] Dumped memory: 0x%02X 0x%02X 0x%02X 0x%02X (Expected: 0x11 0x22 0x33 0x44)\n",
+            my_chip8.memory[0x600], my_chip8.memory[0x601], my_chip8.memory[0x602], my_chip8.memory[0x603]);
+    
+    // FX65: Load registers V0-V3 from memory starting at I (0x600)
+    // First we wipe our current registers to see if they reload correctly
+    my_chip8.V[0] = 0; my_chip8.V[1] = 0; my_chip8.V[2] = 0; my_chip8.V[3] = 0;my_chip8.pc = 0x200;
+    inject_opcode(&my_chip8, 0x200, 0xF365); // Load V0 through V3
+    chip8_emulateCycle(&my_chip8);printf("[FX65] Loaded registers: V0=0x%02X, V1=0x%02X, V2=0x%02X, V3=0x%02X (Expected: 0x11, 0x22, 0x33, 0x44)\n",
+        my_chip8.V[0], my_chip8.V[1], my_chip8.V[2], my_chip8.V[3]);
+
+    // ----------------------------------------------------
+    // TEST 9: 0-Series & Stack (00E0, 00EE, 2NNN)
+    // ----------------------------------------------------
+    printf("\n--- Testing 0-Series & Stack ---\n");
+
+    // 00E0: Clear Screen
+    my_chip8.pc = 0x200; my_chip8.gfx[100] = 1; my_chip8.gfx[500] = 1; // Set two pixels
+    inject_opcode(&my_chip8, 0x200, 0x00E0);
+    chip8_emulateCycle(&my_chip8);
+    // Check if the screen was cleared (pixels should be 0)
+    printf("[00E0] Wiped screen check: Pixel 100 = %d, Pixel 500 = %d (Expected: 0, 0)\n",my_chip8.gfx[100], my_chip8.gfx[500]);
+    
+    // 2NNN (Call) & 00EE (Return)
+    my_chip8.pc = 0x200; my_chip8.sp = 0;
+    inject_opcode(&my_chip8, 0x200, 0x2400); // CALL subroutine at 0x400
+    inject_opcode(&my_chip8, 0x400, 0x00EE); // RETURN from subroutine
+    chip8_emulateCycle(&my_chip8); // Executes Call (PC goes to 0x400)
+    printf("[2NNN Call] PC after CALL: 0x%X (Expected: 0x400) | SP: %d (Expected: 1)\n", 
+        my_chip8.pc, my_chip8.sp);chip8_emulateCycle(&my_chip8); // Executes Return (PC should go back to 0x202)
+    printf("[00EE Return] PC after RETURN: 0x%X (Expected: 0x202) | SP: %d (Expected: 0)\n", 
+        my_chip8.pc, my_chip8.sp);
+    
+    // ----------------------------------------------------
+    // TEST 10: Random Number (CXNN)
     // ----------------------------------------------------
     printf("\n--- Testing Random Number ---\n");
     my_chip8.pc = 0x200;
-    inject_opcode(&my_chip8, 0x200, 0xC10F); // V1 = rand() & 0x0F (Result MUST end in something between 0x0 and 0x0F)
-    chip8_emulateCycle(&my_chip8);
-    printf("[CXNN] V1 (masked random): 0x%02X (Should be a number where the first digit is 0, e.g., 0x03, 0x0A, etc.)\n", my_chip8.V[1]);
-
-    printf("\n=== TEST COMPLETED ===\n");
-    return 0;
-}
-
+    inject_opcode(&my_chip8, 0x200, 0xC10F); // V1 = rand() & 0x0F
+    chip8_emulateCycle(&my_chip8);// With srand(time), this will vary every execution!
+    printf("[CXNN] V1 (masked random): 0x%02X (Should vary and end with a value 0x0 to 0x0F)\n", 
+        my_chip8.V[1]);
+    printf("\n=== ALL AVAILABLE TESTS COMPLETED ===\n");return 0;}

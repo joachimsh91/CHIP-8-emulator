@@ -29,6 +29,11 @@ void chip8_initialize(Chip8* system) {
     system->delay_timer = 0;    // Reset delay timer
     system->sound_timer = 0;    // Reset sound timer
 
+    // Clear screen
+    for (int i = 0; i < 2048; i++) {
+        system->gfx[i] = 0;
+    }
+
     // Clear stack
     for (int i = 0; i < 16; i++) {
         system->stack[i] = 0;
@@ -58,6 +63,23 @@ void chip8_emulateCycle(Chip8* system) {
     // Decode opcode
     switch(system->opcode & 0xF000)
     {   
+        case 0x0000:
+            switch(system->opcode & 0x00FF)
+            {
+                case 0x00E0: // Clears the screen
+                    for (int i = 0; i < 2048; i++) {
+                        system->gfx[i] = 0;
+                    }
+                    system->pc += 2;
+                    break;
+
+                case 0x00EE: // Returns from a subroutine
+                    system->sp--; // Move stack pointer down to the saved address
+                    system->pc = system->stack[system->sp]; // // Put the return address back into PC
+                    break;
+            }
+            break;
+
         case 0x1000: // 1NNN: Jumps to address NNN
             system->pc = system->opcode & 0x0FFF;
             break;
@@ -78,27 +100,27 @@ void chip8_emulateCycle(Chip8* system) {
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
             if (system->V[x] == nn){
-                system->pc +=2;
+                system->pc += 2;
             }
-            system->pc +=2;
+            system->pc += 2;
             break;
     }
         case 0x4000: { // Skips the next instruction if VX does not equal NN (usually the next instruction is a jump to skip a code block)
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
             if (system->V[x] != nn){
-                system->pc +=2;
+                system->pc += 2;
             }
-            system->pc +=2;
+            system->pc += 2;
             break;
     }
         case 0x5000: { // Skips the next instruction if VX equals VY (usually the next instruction is a jump to skip a code block)
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t y = (system->opcode & 0x00F0) >> 4;
             if (system->V[x] == system->V[y]){
-                system->pc +=2;
+                system->pc += 2;
             }
-            system->pc +=2;
+            system->pc += 2;
             break;
         }
 
@@ -106,7 +128,7 @@ void chip8_emulateCycle(Chip8* system) {
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
             system->V[x] = nn;
-            system->pc +=2;
+            system->pc += 2;
             break;
 
         }
@@ -115,7 +137,7 @@ void chip8_emulateCycle(Chip8* system) {
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
             system->V[x] += nn;
-            system->pc +=2;
+            system->pc += 2;
             break;
         }
 

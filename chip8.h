@@ -1,5 +1,6 @@
 #ifndef CHIP8_H
 #define CHIP8_H
+#define BUFFER_SIZE 3584 // Maximum size for a CHIP-8 ROM file
 
 #include <stdint.h>
 
@@ -37,10 +38,19 @@ typedef struct {
     uint8_t key[16]; //The CHIP-8 has a HEX based keypad (0x0-0xF), you can use an array to store the current state of the key. 
 } Chip8;
 
+typedef struct {
+    const char* filename;
+    uint16_t actual_size;
+    uint8_t buffer[BUFFER_SIZE];
+} RomReader;
 
 void chip8_initialize(Chip8* system);
 
 void chip8_emulateCycle(Chip8* system);
+
+void rom_reader(RomReader* rom);
+
+void rom_loader(Chip8* system, RomReader* rom);
 
 extern const uint8_t chip8_fontset[80];
 

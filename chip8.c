@@ -21,6 +21,35 @@ const uint8_t chip8_fontset[80] = {         // The standard CHIP-8 fontset (16 s
     0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
+void rom_reader(RomReader* rom) { // Read ROM file and store ROM data to buffer 
+    FILE *fil = fopen(rom->filename, "rb");
+    if (fil == NULL) {
+        printf("Error opening file: %s\n", rom->filename);
+        return;
+    }
+
+    // Move the file pointer to the end to get file size
+    fseek(fil, 0, SEEK_END);
+    long file_size = ftell(fil);
+    rom->actual_size = (uint16_t)file_size;
+    rewind(fil); // Move back to the beginning 
+
+    // Read the entire file into the buffer 
+    size_t bytes_read = fread(rom->buffer, 1, file_size, fil);
+    
+    printf("Successfully read %zu bytes from %s into buffer.\n", bytes_read, rom->filename);
+
+    // Clean up and close the file
+    fclose(fil);
+}
+
+void rom_loader(Chip8* system, RomReader* rom) { // Load ROM data into memory
+    for (int i = 0; i < rom->actual_size; i++) {
+        system->memory[0x200 + i] = rom->buffer[i];
+    }
+}
+
+
 void chip8_initialize(Chip8* system) {
     system->pc = 0x200;         // Program counter always starts at 0x200
     system->opcode = 0;         // Reset current opcode

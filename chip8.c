@@ -49,7 +49,6 @@ void rom_loader(Chip8* system, RomReader* rom) { // Load ROM data into memory
     }
 }
 
-
 void chip8_initialize(Chip8* system) {
     system->pc = 0x200;         // Program counter always starts at 0x200
     system->opcode = 0;         // Reset current opcode
@@ -133,7 +132,7 @@ void chip8_emulateCycle(Chip8* system) {
             }
             system->pc += 2;
             break;
-    }
+        }
         case 0x4000: { // Skips the next instruction if VX does not equal NN (usually the next instruction is a jump to skip a code block)
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t nn = system->opcode & 0x00FF;
@@ -142,7 +141,7 @@ void chip8_emulateCycle(Chip8* system) {
             }
             system->pc += 2;
             break;
-    }
+        }
         case 0x5000: { // Skips the next instruction if VX equals VY (usually the next instruction is a jump to skip a code block)
             uint8_t x = (system->opcode & 0x0F00) >> 8;
             uint8_t y = (system->opcode & 0x00F0) >> 4;

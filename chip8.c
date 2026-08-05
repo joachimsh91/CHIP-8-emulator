@@ -283,6 +283,48 @@ void chip8_emulateCycle(Chip8* system) {
             break;
         }
 
+        case 0xD000: { // Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels. Each row of 8 pixels is read as bit-coded starting from memory location I; I value does not change after the execution of this instruction. VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, and to 0 if that does not happen
+            uint8_t x = (system->opcode & 0x0F00) >> 8;
+            uint8_t y = (system->opcode & 0x00F0) >> 4;
+            uint8_t n = system->opcode & 0x000F;
+
+            uint8_t start_x = system->V[x];
+            uint8_t start_y = system->V[y];
+
+            // Sets collision flag VF to 0
+            system->V[0xF] = 0;
+
+            // Y-loop goes from 0 to n height
+            for (int y_offset = 0; y_offset < n; y_offset++) {
+                
+                // Get byte for this line from memory
+                uint8_t sprite_byte = system->memory[system->I + y_offset];
+
+                // X-loop goes 8 bit in width
+                for (int x_offset = 0; x_offset < 8; x_offset++) {
+                    
+                    // Check if the bit on this x-position in the byte is 1
+                    if ((sprite_byte & (0x80 >> x_offset)) != 0) {
+                        
+                        // Calculate the actual coordinate on the screen with wrapping (modulo)
+                        int current_x = (start_x + x_offset) % 64;
+                        int current_y = (start_y + y_offset) % 32;
+                        int gfx_index = current_x + (current_y * 64);
+
+                        // If the pixel on the screen is already 1, we have a collision
+                        if (system->gfx[gfx_index] == 1) {
+                            system->V[0xF] = 1;
+                        }
+                        
+                        // XOR the pixel (turns 0 to 1, or 1 to 0)
+                        system->gfx[gfx_index] ^= 1;
+                    }
+                }
+            }
+            system->pc += 2;
+            break;
+        }
+
         case 0xE000: {
             uint8_t x = (system->opcode & 0x0F00) >> 8;
 

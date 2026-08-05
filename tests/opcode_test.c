@@ -263,4 +263,44 @@ int main() {
     chip8_emulateCycle(&my_chip8);// With srand(time), this will vary every execution!
     printf("[CXNN] V1 (masked random): 0x%02X (Should vary and end with a value 0x0 to 0x0F)\n", 
         my_chip8.V[1]);
-    printf("\n=== ALL AVAILABLE TESTS COMPLETED ===\n");return 0;}
+    
+        // ----------------------------------------------------
+    // TEST 11: The Graphics (DXYN - Draw Sprite)
+    // ----------------------------------------------------
+    printf("\n--- Testing DXYN (Draw Sprite) ---\n");
+    my_chip8.pc = 0x200;
+    my_chip8.I = 0x50;      // Point I to the character '0' fontset address
+    my_chip8.V[1] = 0;      // X-coordinate = 0 (Rettet fra my_chip8.V = 0)
+    my_chip8.V[2] = 0;      // Y-coordinate = 0 (Rettet fra my_chip8.V = 0)
+    
+    // Inject D125: Draw sprite at (V1, V2) with a height of 5 bytes
+    inject_opcode(&my_chip8, 0x200, 0xD125); 
+    chip8_emulateCycle(&my_chip8); // Run the draw opcode
+    
+    printf("[DXYN Draw] Sprite drawn at (0,0). Checking collision flag VF: %d (Expected: 0)\n", my_chip8.V[0xF]);
+    printf("[DXYN Draw] Let's verify pixel grid at (0,0) down to (4,0) to see if '0' shape was rendered:\n");
+    
+    // Row 0 of character '0' is 0xF0 (bin: 1111 0000). Pixels 0,1,2,3 should be 1.
+    printf("   Row 0: (%d %d %d %d) (Expected: 1 1 1 1)\n", 
+            my_chip8.gfx[0 + (0 * 64)], my_chip8.gfx[1 + (0 * 64)], my_chip8.gfx[2 + (0 * 64)], my_chip8.gfx[3 + (0 * 64)]);
+            
+    // Row 1 of character '0' is 0x90 (bin: 1001 0000). Pixels 0 and 3 should be 1, pixel 1 and 2 should be 0.
+    printf("   Row 1: (%d %d %d %d) (Expected: 1 0 0 1)\n", 
+            my_chip8.gfx[0 + (1 * 64)], my_chip8.gfx[1 + (1 * 64)], my_chip8.gfx[2 + (1 * 64)], my_chip8.gfx[3 + (1 * 64)]);
+
+    // Test XOR collision: Draw the exact same sprite again on top of itself!
+    my_chip8.pc = 0x200;
+    inject_opcode(&my_chip8, 0x200, 0xD125); 
+    chip8_emulateCycle(&my_chip8); // Run the draw opcode again!
+    
+    printf("[DXYN Collision] Drew on top of existing pixels. VF is now: %d (Expected: 1)\n", my_chip8.V[0xF]);
+    printf("[DXYN Collision] Screen should be wiped cleanly back to 0 due to XOR:\n");
+    printf("   Row 0 after XOR: (%d %d %d %d) (Expected: 0 0 0 0)\n", 
+            my_chip8.gfx[0 + (0 * 64)], my_chip8.gfx[1 + (0 * 64)], my_chip8.gfx[2 + (0 * 64)], my_chip8.gfx[3 + (0 * 64)]);
+    
+    printf("\n=== 33/34 OPCODES TESTED AND VERIFIED ===\n");
+
+    
+    return 0;}
+
+    

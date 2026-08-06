@@ -52,6 +52,8 @@ void rom_reader(RomReader* rom);
 
 void rom_loader(Chip8* system, RomReader* rom);
 
+void chip8_update_timers(Chip8* system);
+
 extern const uint8_t chip8_fontset[80];
 
 

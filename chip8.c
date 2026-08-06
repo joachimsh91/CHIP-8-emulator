@@ -49,6 +49,15 @@ void rom_loader(Chip8* system, RomReader* rom) { // Load ROM data into memory
     }
 }
 
+void chip8_update_timers(Chip8* system) {
+    if (system->delay_timer > 0) {
+        system->delay_timer--;
+    }
+    if (system->sound_timer > 0) {
+        system->sound_timer--;
+    }
+}
+
 void chip8_initialize(Chip8* system) {
     system->pc = 0x200;         // Program counter always starts at 0x200
     system->opcode = 0;         // Reset current opcode

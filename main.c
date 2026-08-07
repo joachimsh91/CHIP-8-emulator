@@ -21,11 +21,16 @@ void handle_key_input(Chip8* system, char key, int is_pressed) { // Keyboard han
     }
 }
 
+RomReader my_reader;
+Chip8 my_chip8;
+
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 320
 
 int main(int argc, char* argv[]) {
     printf("=== Starting CHIP-8 Emulator with SDL2 ===\n");
+
+    my_reader.filename = "Pong.ch8";
 
     // Initialize SDL2 (We request both video/graphics and audio/sound!)
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
@@ -52,18 +57,46 @@ int main(int argc, char* argv[]) {
 
     int running = 1;
     SDL_Event event;
+    uint32_t last_timer_time = SDL_GetTicks();
+
+    // Setting up the emulator core
+    chip8_initialize(&my_chip8);
+
+    // Read ROM file
+    rom_reader(&my_reader);
+
+    // Load ROM into memory
+    rom_loader(&my_chip8, &my_reader);
+
     while(running) {
 
         // Check the OS mailbox for any user interactions (inputs, clicks, closes)
         while (SDL_PollEvent(&event)) {
-            // If the user clicks the X button on the window, exit neatly
+            // If the user clicks the X button on the window, it gets closed
             if (event.type == SDL_QUIT) {
                 running = 0;
             }
+            // If a key is pressed
+            else if (event.type == SDL_KEYDOWN) {
+                char key = event.key.keysym.sym;
+                handle_key_input(&my_chip8, key, 1);
+            }
+            // If a key is released
+            else if (event.type == SDL_KEYUP) {
+                char key = event.key.keysym.sym;
+                handle_key_input(&my_chip8, key, 0);
+            }
         }
-        SDL_Delay(1);
+    
+    chip8_emulateCycle(&my_chip8);
+    // 60 Hz Timer logic: Check if 16.6 milliseconds have passed
+    if (SDL_GetTicks() - last_timer_time >= 16) {
+        chip8_update_timers(&my_chip8); 
+        last_timer_time = SDL_GetTicks(); // Reset the stopwatch
     }
+    SDL_Delay(1);
 
+    }
     // Clean up memory and close SDL2 before the program terminates
     SDL_DestroyWindow(window);
     SDL_Quit();
